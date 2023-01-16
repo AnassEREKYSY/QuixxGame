@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    <title>Quixx_sessionStorage</title>
+    <style>
+         #container{
+                display: grid;
+                grid-template-rows: repeat(6,1fr);
+                height: 500px;
+                width: 1000px;
+                row-gap: 10px;
+                position: relative;
+                right: -150px;
+                align-items: center;
+            }
+        .sub_container{
+            display: grid;
+            column-gap: 10px;
+            grid-template-columns: repeat(12,1fr);
+            border-radius: 18px;
+        }
+        .sub_container:hover{
+            box-shadow: 1px 1px 1px 1px rgb(142, 142, 142);
+        }
+        .sub_container button:hover{
+            box-shadow: 1px 2px 2px 1px rgb(128, 127, 127);
+            cursor: pointer;
+        }
+        #sub_container0 button {
+            background-color: rgb(248, 115, 115);
+        }
+        #sub_container1 button {
+            background-color: rgb(228, 245, 103);
+        }
+        #sub_container2 button {
+            background-color: rgb(155, 248, 115);
+        }
+        #sub_container3 button {
+            background-color: rgb(115, 175, 248);
+        }
+        .item{
+            border-radius: 18px;
+            border: 1px solid #000;
+            font-size: 45px;
+        }
+        #last{
+            display: grid;
+            column-gap: 10px;
+            grid-template-columns: repeat(6,2fr);
+        }
+        #last button{
+            color: rgb(231, 126, 126);
+        }
+        .last_item,.pen_item2_{
+            border-radius: 18px;
+            border: 1px solid #000;
+            text-align:center;
+            font-size: 45px;   
+        }
+        #penalite{
+            display: grid;
+            column-gap: 10px;
+            grid-template-columns: repeat(2,1fr);
+        }
+        #pen_item2{
+            display: grid;
+            grid-template-columns: repeat(4,75px);
+            justify-content: space-evenly;
+            border-radius: 18px;
+            text-align:center;
+            font-size: 45px;   
+        }
+        #pen_item2:hover{
+            box-shadow: 1px 1px 1px 1px rgb(142, 142, 142);
+        }
+        #pen_item2 button:hover{
+            box-shadow: 1px 2px 2px 1px rgb(128, 127, 127);
+            cursor: pointer;
+        }
+        #pen_item2 button{
+            background-color: rgb(169, 169, 169);
+        }
+        #pen_item1{
+            border-radius: 18px;
+            border: 1px solid #000;
+            text-align:center;
+            font-size: 35px;
+            color: rgb(243, 115, 115);
+        }
+
+       
+
+    </style>
+</head>
+<body>
+    <script>
+            //****************exemple qui garde l'etat du jeu avec le sessionStorage*****************
+        var penalite=0,lines=0;
+
+        //fonction Grid qui créer la structure HTML du jeux en JS
+        function Grid(){
+            let x="x";
+            let cmp=0,nb=2;
+
+            // création du container et de la boutton du refresh de la page
+            var container=document.createElement("div");
+            container.setAttribute("id","container");
+            var resetButton=document.createElement("button");
+            resetButton.setAttribute("id","resetButton");
+            resetButton.setAttribute("class","btn btn-outline-primary m-2");
+            resetButton.addEventListener("click",onReset(resetButton));
+            resetButton.innerHTML="Nouvelle partie";
+
+            // creation des 4 lignes en couleur 
+            for(let i=0;i<4;i++){
+
+                // création de la ligne en couleur
+                let sub_container=document.createElement("div");
+                sub_container.setAttribute("id","sub_container"+i);
+                sub_container.setAttribute("class","sub_container");
+
+                // création des items de la ligne en couleur
+                if(cmp<2){
+                    for(let j=0;j<12;j++){
+
+                        //création de l'item 
+                        let item=document.createElement("button");
+                        item.setAttribute("id",+i+"item"+(j+1));
+                        item.setAttribute("name","NotSelected");
+                        item.setAttribute("class","item");
+                        item.addEventListener("click",onClick(item));
+                        if(j==11){
+                            nb=x;
+                            item.setAttribute("disabled","true");
+                        }
+                        item.innerHTML=nb;
+                        // l'ajout de l'item à la ligne en couleur
+                        sub_container.appendChild(item);
+                        nb++;
+                    }
+                    nb=2;
+                    cmp++;
+                }else{
+                    nb=12;
+                    for(let j=0;j<12;j++){
+
+                        //création de l'item 
+                        let item=document.createElement("button");
+                        item.setAttribute("name","NotSelected");
+                        item.setAttribute("class","item");
+                        item.setAttribute("id",+i+"item"+(j+1));
+                        if(j==11){
+                            nb=x;
+                            item.setAttribute("disabled","true");
+                        }
+                        item.innerHTML=nb;
+                        item.addEventListener("click",onClick(item));
+                        nb--;
+                        // l'ajout de l'item à la ligne en couleur
+                        sub_container.appendChild(item);
+                    }
+                    cmp++;
+                }
+
+                // ajout de la ligne en couleur au container
+                container.appendChild(sub_container);
+            }
+
+
+            // création de l'avant dernier ligne qui va contenir les penalitées
+            var penaliteLine=document.createElement("div");
+            penaliteLine.setAttribute("id","penalite");
+
+            //création de la 1ère sous partie de l'avant dérniere ligne et qui contient le mot "Pénalités"
+            let div1=document.createElement("div");
+            div1.setAttribute("id","pen_item1");
+            div1.innerHTML="Pénalités"
+
+            //création de la 2ème sous partie de l'avant dérniere ligne et qui contient les cases du pénalitées
+            let div2=document.createElement("div");
+            div2.setAttribute("id","pen_item2");
+            for(let j=0;j<4;j++){
+
+                // création des items de la 2ème sous partie de l'avant dérniere ligne
+                let item=document.createElement("button");
+                item.setAttribute("id","pen_item2_"+j);
+                item.setAttribute("class","pen_item2_");
+                item.addEventListener("click",penalites(item));
+                // l'ajout de l'item à la 2ème sous partie de l'avant dérniere ligne
+                div2.appendChild(item);
+            }
+            // l'ajout des 2 sous parties de l'avant dérniere ligne à l'avant dérniere ligne
+            penaliteLine.appendChild(div1);
+            penaliteLine.appendChild(div2);
+
+            // l'ajout de l'avant dérniere ligne au container 
+            container.appendChild(penaliteLine);
+
+            // création de la derniere ligne qui va contenir le score
+            var last=document.createElement("div");
+            last.setAttribute("id","last");
+            //création des items de la deniere ligne
+            for(let j=0;j<6;j++){
+                let item=document.createElement("span");
+                item.setAttribute("id","last_item"+j);
+                item.setAttribute("class","last_item");
+                item.innerHTML=0;
+                //l'ajout de l'item à la derniere ligne
+                last.appendChild(item);
+            }
+
+            //l'ajout de la dérniere ligne au container 
+            container.appendChild(last);
+
+            // l'ajout au body
+            var super_container=document.createElement("div");
+            super_container.setAttribute("id","super_container");
+            super_container.appendChild(resetButton);
+            super_container.appendChild(container);
+            document.querySelector("body").appendChild(super_container);
+        }
+
+        // fonction qui gére les cliques sur les cases des lignes en couleur
+        function onClick(element){
+            element.onclick=function(){
+                let itemState= new Array();
+                let a=this.getAttribute('id');
+                let tmp=a.split("item");
+                let id=parseInt(tmp[1]);
+                this.style.backgroundColor='white';
+                this.style.color='black';
+                this.setAttribute("name","Selected");
+                itemState=[this.getAttribute('id'),this.getAttribute('name'),true];
+                sessionStorage.setItem(a,itemState);
+                // si on clique sur la 1ère case on la desative
+                if(id==1){
+                    this.disabled=true;
+                }
+                // sinon on desactive les cases precedentes
+                else{
+                    tmp=a.split("i");
+                    let parent="sub_container"+tmp[0];
+                    var elements =document.getElementById("sub_container"+tmp[0]).getElementsByTagName("button");
+                    for(let i=id-2;i>=0;i--){
+                        let idelement=elements[i].getAttribute('id');
+                        if(elements[i].getAttribute('name')=="Selected"){
+                            continue;
+                        }else{
+                            elements[i].disabled=true;
+                            elements[i].style.backgroundColor='rgb(142, 142, 142)';
+                            elements[i].style.color='black';
+                            itemState=[idelement,null,true];
+                            sessionStorage.setItem(idelement,itemState);
+                        }
+                    }
+                }
+                traitementElement(element);   
+            };
+        }
+
+        //fonction qui calcule le score de chaque ligne apres un clique sur une case
+        function traitementElement(element){
+            let cmp=0;
+            let a=element.getAttribute('id');
+            let tmp=a.split("i");
+            let el=document.getElementById("last_item"+tmp[0]);
+            var elements =document.getElementById("sub_container"+tmp[0]).getElementsByTagName("button");
+            for(let i=0;i<elements.length;i++){
+                if(elements[i].getAttribute('name') =="Selected"){
+                    cmp++;
+                }
+            }
+            // tester si la case cliqué n'est pas la case de fermeture de la ligne
+            if(element.innerHTML!='x'){
+                el.innerHTML=+cmp*(cmp+1)/2;
+                sessionStorage.setItem('scor'+tmp[0],parseInt(el.innerHTML));
+            }
+
+            if(cmp>=5){
+               endLine(elements[elements.length-1]);
+            }
+        }
+
+        //fonction qui gére le clique sur l'item X 
+        function endLine(element){
+            element.removeAttribute("disabled");
+            if(element.getAttribute("name")=="Selected"){lines++;}
+            if(lines==2){EndGame();}
+        }
+
+        //fonction qui gére les cliques sur les cases de pénalité
+        function penalites(pen){
+            pen.onclick=function(){
+                this.setAttribute("disabled","true");
+                this.style.backgroundColor='white';
+                penalite++;
+                sessionStorage.getItem('penalite')==undefined?sessionStorage.setItem('penalite',5):sessionStorage.setItem('penalite',parseInt(sessionStorage.getItem('penalite'))+5);
+                let el=document.getElementById("last_item4");
+                el.innerHTML= parseInt(el.innerHTML)+5;
+                if(penalite==4){EndGame();}
+            }
+        }
+
+        //fonction qui gére la fin du jeu et calcule le total des points
+        function EndGame(){
+            let end=document.getElementsByTagName("button");
+            let lastElement=document.getElementsByTagName("span");
+            let somme=0;
+            sessionStorage.setItem('EndGame',true);
+                for (let i=0;i<end.length;i++){
+                    if(end[i].getAttribute("name")=="NotSelected"){
+                        end[i].disabled=true;
+                        end[i].style.backgroundColor='rgb(142, 142, 142)';
+                        end[i].style.color='black';
+                    }else{
+                        continue;
+                    }
+                }
+                for(let i=0;i<lastElement.length-2;i++){
+                    somme+=parseInt(lastElement[i].innerHTML);
+                }
+                lastElement[lastElement.length-1].innerHTML=somme-parseInt(lastElement[lastElement.length-2].innerHTML);
+                sessionStorage.setItem('total',lastElement[lastElement.length-1].innerHTML);
+        }
+        
+        //fonction qui nous premettre de faire la réinitialisation du jeu
+        function onReset(element){
+            element.onclick=function(){
+                sessionStorage.clear();
+                window.location.reload();
+            }
+        }
+
+        // fonction qui permettre de sauvgarder l'etat du jeu apres clique sur actualiser ou bien (ctrl+r || ctrl+f5)
+        window.onload=function(){
+            let id=[];
+            let lastElement=document.getElementsByTagName("span");
+            let Element=document.getElementsByTagName("button");
+            let el=document.getElementsByClassName("pen_item2_");
+
+            if(sessionStorage.getItem('EndGame')){
+                for (let i=0;i<Element.length;i++){
+                    if(Element[i].getAttribute("name")=="NotSelected"){
+                        Element[i].disabled=true;
+                        Element[i].style.backgroundColor='rgb(142, 142, 142)';
+                        Element[i].style.color='black';
+                    }else{
+                        continue;
+                    }
+                }
+            }
+
+            sessionStorage.getItem('total')==undefined?lastElement[lastElement.length-1].innerHTML=0:lastElement[lastElement.length-1].innerHTML=sessionStorage.getItem('total');
+            sessionStorage.getItem('penalite')==undefined?lastElement[lastElement.length-2].innerHTML=0:lastElement[lastElement.length-2].innerHTML=sessionStorage.getItem('penalite');
+           
+            switch(sessionStorage.getItem('penalite')){
+                case '5':{
+                   el[0].setAttribute("disabled","true");
+                   el[0].style.backgroundColor='white';
+                    break;
+                }
+                case '10':{
+                    for (let i=0;i<2;i++){
+                        el[i].setAttribute("disabled","true");
+                        el[i].style.backgroundColor='white';
+                    }
+                    break;
+                }
+                case '15':{
+                    for (let i=0;i<3;i++){
+                        el[i].setAttribute("disabled","true");
+                        el[i].style.backgroundColor='white';
+                    }
+                    break;
+                }
+                case '20':{
+                    for (let i=0;i<4;i++){
+                        el[i].setAttribute("disabled","true");
+                        el[i].style.backgroundColor='white';
+                    }
+                    break;
+                }
+                default : break;
+                
+            }
+
+            for(let i=0;i<lastElement.length-2;i++){
+                if(sessionStorage.getItem('scor'+i)==undefined){
+                    lastElement[i].innerHTML=0;
+                }else{
+                    lastElement[i].innerHTML=sessionStorage.getItem('scor'+i);
+                }
+            }
+
+            for(let i=0;i<Element.length;i++){
+                if(sessionStorage.getItem(Element[i].getAttribute('id'))!=null){
+                    id=sessionStorage.getItem(Element[i].getAttribute('id')).split(',')[0];
+                    name=sessionStorage.getItem(Element[i].getAttribute('id')).split(',')[1].split(',')[0];
+                    if(Element[i].getAttribute('id') == id && name == 'Selected'){
+                        Element[i].setAttribute('name','Selected');
+                        Element[i].setAttribute('disabled',true);
+                        Element[i].style.backgroundColor='white';
+                        Element[i].style.color='black';
+                    }else if(Element[i].getAttribute('id') == id && name != 'Selected'){
+                        Element[i].disabled=true;
+                        Element[i].style.backgroundColor='rgb(142, 142, 142)';
+                        Element[i].style.color='black';
+                    }else{
+                        continue;
+                    }
+                }else{
+                    continue;
+                }
+            }
+        }
+
+        Grid();
+    </script>
+</body>
+</html>
